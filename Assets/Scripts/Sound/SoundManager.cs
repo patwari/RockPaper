@@ -18,8 +18,14 @@ namespace Sound {
             SubscribeEvents();
         }
 
-        private void SubscribeEvents() { }
-        private void UnsubscribeEvents() { }
+        private void SubscribeEvents() {
+            Events.EventsModel.ON_BGM_STATE_CHANGED += OnBgmStateChanged;
+        }
+
+        private void UnsubscribeEvents() {
+            Events.EventsModel.ON_BGM_STATE_CHANGED -= OnBgmStateChanged;
+        }
+
         private void OnDestroy() => UnsubscribeEvents();
 
         #region Generic Control Methods

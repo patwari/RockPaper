@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro;
 using System;
+using Events;
 
 namespace Lobby {
     public class LobbyInfoFiller : MonoBehaviour {
@@ -8,6 +9,11 @@ namespace Lobby {
 
         private void Awake() {
             UpdateInfoText();
+            EventsModel.DATA_CLEARED += UpdateInfoText;
+        }
+
+        private void OnDestroy() {
+            EventsModel.DATA_CLEARED -= UpdateInfoText;
         }
 
         private void UpdateInfoText() {

@@ -39,27 +39,35 @@ namespace Gameplay {
 
             GameplayEvents.BOT_MOVE_MADE += OnBotMoveMade;
             GameplayEvents.ROUND_TIME_END += OnRoundTimeEnd;
+            EventsModel.DATA_CLEARED += UpdateInfoText;
             UpdateInfoText();
+        }
+
+        private void Start() {
+            DI.di.soundManager.PlayBgm("gameplay");
+            StartNextRound();
         }
 
         private void OnDestroy() {
             GameplayEvents.BOT_MOVE_MADE -= OnBotMoveMade;
             GameplayEvents.ROUND_TIME_END -= OnRoundTimeEnd;
+            EventsModel.DATA_CLEARED -= UpdateInfoText;
+            DI.di.soundManager.StopBgm();
         }
 
         private void OnBotMoveMade(PlayerShape botShape) {
             this.botShape = botShape;
         }
 
-        private void Start() {
-            StartNextRound();
+        private void OnExitButtonClicked() {
+            DI.di.soundManager.PlayDefaultButtonClick();
+            ExitToLobby();
         }
 
-        private void OnExitButtonClicked() {
+        private void ExitToLobby() {
             DI.di.dataSaver.InGamePlay = false;
             DI.di.dataSaver.currRoundNumber = 0;
             DI.di.dataSaver.currStreak = 0;
-            Debug.Log("GameplayManager :: OnExitButtonClicked");
             EventsModel.LOAD_SCENE?.Invoke(GameConstants.Scenes.LOBBY, false, "Loading Lobby...");
         }
 
@@ -67,6 +75,7 @@ namespace Gameplay {
             PlayerShape prev = currShape;
             Debug.Log($"GameplayManager :: OnShapeClicked :: [{prev} -> {shape}]");
             currShape = shape;
+            DI.di.soundManager.PlayDefaultButtonClick();
 
             foreach (Button item in allOptionButtons) {
                 item.transform.DOKill();
@@ -89,6 +98,7 @@ namespace Gameplay {
         private void MakeReadyForNextRound() {
             currShape = PlayerShape.UNDEFINED;
             botShape = PlayerShape.UNDEFINED;
+            currRoundResult = RoundResult.UNDEFINED;
             currState = State.WAITING_FOR_ROUND_START;
             DI.di.dataSaver.currRoundNumber++;
             foreach (Button b in allOptionButtons) {
@@ -129,18 +139,21 @@ namespace Gameplay {
 
             SaveRoundData();
 
-            if (currRoundResult == RoundResult.PLAYER_LOST_NO_MOVE || currRoundResult == RoundResult.PLAYER_LOST) {
-                // GameplayEvents.SHOW_POPUP?.Invoke("Game Over", 1f, null, () => {
-                //     OnExitButtonClicked();
-                // });
+            if (currRoundResult == RoundResult.PLAYER_LOST_NO_MOVE) {
                 GameplayEvents.SHOW_POPUP?.Invoke($"Why??\n{roundResultReason}", 2f, null, () => {
-                    StartNextRound();
+                    if (DI.di.dataSaver.AllowExitOnLose) {
+                        ExitToLobby();
+                    } else {
+                        StartNextRound();
+                    }
                 });
-            }
-
-            if (currRoundResult == RoundResult.PLAYER_LOST) {
+            } else if (currRoundResult == RoundResult.PLAYER_LOST) {
                 GameplayEvents.SHOW_POPUP?.Invoke($"You Lost\n{roundResultReason}", 2f, null, () => {
-                    StartNextRound();
+                    if (DI.di.dataSaver.AllowExitOnLose) {
+                        ExitToLobby();
+                    } else {
+                        StartNextRound();
+                    }
                 });
             } else if (currRoundResult == RoundResult.TIE) {
                 GameplayEvents.SHOW_POPUP?.Invoke($"Tie\n{roundResultReason}", 2f, null, () => {
@@ -164,9 +177,11 @@ namespace Gameplay {
                     break;
                 case RoundResult.PLAYER_LOST:
                     DI.di.dataSaver.roundsLost++;
+                    DI.di.dataSaver.currStreak = 0;
                     break;
                 case RoundResult.PLAYER_LOST_NO_MOVE:
-                    DI.di.dataSaver.roundsLost++;
+                    DI.di.dataSaver.roundsLostNoMove++;
+                    DI.di.dataSaver.currStreak = 0;
                     break;
                 case RoundResult.TIE:
                     DI.di.dataSaver.roundsTied++;

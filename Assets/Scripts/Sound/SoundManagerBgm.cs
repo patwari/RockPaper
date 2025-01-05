@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -35,9 +36,17 @@ namespace Sound {
                 currBgmAudio = null;
             }
 
-            if (currBgmAudio != null) currBgmAudio.Play();
+            if (currBgmAudio != null) {
+                currBgmAudio.Play();
+                currBgmAudio.mute = !canPlayBgm;
+            }
 
             Debug.Log($"BGM :: PlayBgm :: [{currBgmAudio.name}]");
+        }
+
+        private void OnBgmStateChanged() {
+            if (currBgmAudio != null)
+                currBgmAudio.mute = !canPlayBgm;
         }
 
         /// <summary>
@@ -46,13 +55,9 @@ namespace Sound {
         /// If fadeOut is FALSE, then the BGM will stop instantly.
         /// </summary>
         /// <param name="fadeOut"> default true. FALSE = curr BG will be stopped immediately. </param>
-        public void StopBgm(bool fadeOut = true) {
+        public void StopBgm() {
             if (currBgmAudio == null || currBgmAudio.clip == null) return;
-
-            if (!fadeOut) {
-                currBgmAudio.mute = true;
-                return;
-            }
+            currBgmAudio.mute = true;
         }
     }
 }

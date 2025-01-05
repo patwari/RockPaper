@@ -10,6 +10,14 @@ namespace Gameplay {
             playButton.onClick.AddListener(OnPlayButtonClicked);
         }
 
+        private void Start() {
+            DI.di.soundManager.PlayBgm("lobby");
+        }
+
+        private void OnDestroy() {
+            DI.di.soundManager.StopBgm();
+        }
+
         private void OnPlayButtonClicked() {
             Debug.Log("LobbyManager :: OnPlayButtonClicked");
             playButton.interactable = false;
@@ -18,6 +26,7 @@ namespace Gameplay {
             DI.di.dataSaver.currRoundNumber = 0;
             DI.di.dataSaver.currStreak = 0;
 
+            DI.di.soundManager.PlayDefaultButtonClick();
             EventsModel.LOAD_SCENE?.Invoke(GameConstants.Scenes.GAMEPLAY, false, "Loading Gameplay...");
         }
     }

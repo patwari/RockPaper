@@ -76,5 +76,15 @@ namespace Utils {
             get => PlayerPrefs.GetInt("InGamePlay", 0) == 1;
             set => PlayerPrefs.SetInt("InGamePlay", value ? 1 : 0);
         }
+
+        public bool AllowExitOnLose {
+            get => PlayerPrefs.GetInt("AllowExitOnLose", 1) == 1;
+            set => PlayerPrefs.SetInt("AllowExitOnLose", value ? 1 : 0);
+        }
+
+        public bool CanPlayBgm {
+            get => PlayerPrefs.GetInt("CanPlayBgm", 1) == 1;
+            set => PlayerPrefs.SetInt("CanPlayBgm", value ? 1 : 0);
+        }
     }
 }
