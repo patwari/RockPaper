@@ -8,6 +8,7 @@ namespace Gameplay {
         [SerializeField] private TextMeshProUGUI label;
 
         private ShapeImageConfig shapeConfig => GameDI.di.shapeImageConfig;
+        public PlayerShape currShape { get; private set; } = PlayerShape.UNDEFINED;
 
         internal void SetShape(PlayerShape shape) {
             switch (shape) {

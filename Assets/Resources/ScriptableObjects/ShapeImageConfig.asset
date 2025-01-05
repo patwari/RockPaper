@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f60580b0376b8417089fd3941b94c9c4, type: 3}
   m_Name: ShapeImageConfig
   m_EditorClassIdentifier: 
-  rock: {fileID: 0}
-  paper: {fileID: 0}
-  scissors: {fileID: 0}
-  lizard: {fileID: 0}
-  spock: {fileID: 0}
+  rock: {fileID: 21300000, guid: 519dd0b3715ba4fc7bbe2e00ad9938a7, type: 3}
+  paper: {fileID: 21300000, guid: 5e2586c8d82304bf88647595e90aa559, type: 3}
+  scissors: {fileID: 21300000, guid: 49b1ff97f8f5f405287c8f102d506060, type: 3}
+  lizard: {fileID: 21300000, guid: 63fb2c0b347574d7db3226babae2ce91, type: 3}
+  spock: {fileID: 21300000, guid: 40578d25676374efd96552e914900ade, type: 3}

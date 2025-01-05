@@ -10,6 +10,7 @@ namespace Gameplay {
     /// </summary>
     internal class GameDI {
         public static GameDI di { get; private set; } = new GameDI();
+        public BotManager botManager { get; private set; } = null;
 
         private GameDI() {
             shapeImageConfig = Resources.Load<ShapeImageConfig>("ScriptableObjects/ShapeImageConfig");
@@ -29,5 +30,7 @@ namespace Gameplay {
         }
 
         public ShapeImageConfig shapeImageConfig { get; private set; } = null;
+
+        public void SetBotManager(BotManager botManager) => this.botManager = botManager;
     }
 }
