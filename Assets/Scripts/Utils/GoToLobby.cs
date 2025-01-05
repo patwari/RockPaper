@@ -1,7 +1,6 @@
 using System.Collections;
 using UnityEngine;
 using Events;
-using GameConstants;
 
 namespace Utils {
 
@@ -14,8 +13,13 @@ namespace Utils {
 
         private IEnumerator LoadLobby() {
             yield return new WaitForSeconds(2f);
-            // Load the lobby scene
-            EventsModel.LOAD_SCENE?.Invoke(Scenes.LOBBY, false, "Loading Lobby");
+
+            if (DI.di.dataSaver.InGamePlay) {
+                EventsModel.LOAD_SCENE?.Invoke(GameConstants.Scenes.GAMEPLAY, false, "Resuming Game");
+            } else {
+                // Load the lobby scene
+                EventsModel.LOAD_SCENE?.Invoke(GameConstants.Scenes.LOBBY, false, "Loading Lobby");
+            }
         }
     }
 }

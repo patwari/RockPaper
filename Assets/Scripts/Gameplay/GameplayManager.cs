@@ -5,10 +5,12 @@ using System.Collections;
 using System;
 using System.Collections.Generic;
 using DG.Tweening;
+using TMPro;
 
 namespace Gameplay {
     public partial class GameplayManager : MonoBehaviour {
         [SerializeField] private Button exitButton;
+        [SerializeField] private TextMeshProUGUI infoText;
 
         [SerializeField] private Button rockButton;
         [SerializeField] private Button paperButton;
@@ -25,7 +27,6 @@ namespace Gameplay {
         private State currState = State.INIT;
         private RoundResult currRoundResult = RoundResult.UNDEFINED;
         private string roundResultReason = "";
-        private int roundNum = 0;
 
         private void Awake() {
             exitButton.onClick.AddListener(OnExitButtonClicked);
@@ -37,10 +38,13 @@ namespace Gameplay {
             allOptionButtons = new List<Button>() { rockButton, paperButton, scissorsButton, lizardButton, spockButton };
 
             GameplayEvents.BOT_MOVE_MADE += OnBotMoveMade;
+            GameplayEvents.ROUND_TIME_END += OnRoundTimeEnd;
+            UpdateInfoText();
         }
 
         private void OnDestroy() {
             GameplayEvents.BOT_MOVE_MADE -= OnBotMoveMade;
+            GameplayEvents.ROUND_TIME_END -= OnRoundTimeEnd;
         }
 
         private void OnBotMoveMade(PlayerShape botShape) {
@@ -48,12 +52,15 @@ namespace Gameplay {
         }
 
         private void Start() {
-            StartCoroutine(WaitAndStartRound());
+            StartNextRound();
         }
 
         private void OnExitButtonClicked() {
+            DI.di.dataSaver.InGamePlay = false;
+            DI.di.dataSaver.currRoundNumber = 0;
+            DI.di.dataSaver.currStreak = 0;
             Debug.Log("GameplayManager :: OnExitButtonClicked");
-            EventsModel.LOAD_SCENE?.Invoke("Lobby", false, "Loading Lobby...");
+            EventsModel.LOAD_SCENE?.Invoke(GameConstants.Scenes.LOBBY, false, "Loading Lobby...");
         }
 
         private void OnShapeClicked(PlayerShape shape, Button button) {
@@ -68,44 +75,45 @@ namespace Gameplay {
             }
         }
 
-        private IEnumerator WaitAndStartRound() {
+        private void StartNextRound() {
             GameplayEvents.SHOW_POPUP?.Invoke("NEXT ROUND", 1f, () => {
                 MakeReadyForNextRound();
+                GameDI.di.botManager.ReadyForNewRound();
+                GameDI.di.timerManager.ReadyForNewRound();
+            }, () => {
                 GameDI.di.botManager.StartThinking();
-                // StartCoroutine(WaitAndMakeBotMove());
-                StartCoroutine(WaitAndEndRound());
+                GameDI.di.timerManager.StartCountdownTimer();
             });
-            // TODO: show a round start popup
-            yield return new WaitForSeconds(1f);
         }
 
-        // private IEnumerator WaitAndMakeBotMove() {
-        //     float delay = UnityEngine.Random.Range(0.5f, GameConstants.GameplayConstants.ROUND_TIME - 0.5f);
-        //     yield return new WaitForSeconds(delay);
-        //     botShape = GameDI.di.botManager.MakeBotMove();
-        // }
-
         private void MakeReadyForNextRound() {
-            // TODO: show a popup => to get ready
             currShape = PlayerShape.UNDEFINED;
             botShape = PlayerShape.UNDEFINED;
             currState = State.WAITING_FOR_ROUND_START;
-            roundNum++;
-            GameDI.di.botManager.ReadyForNewRound();
-            foreach (Button item in allOptionButtons) {
-                item.transform.DOKill();
-                item.transform.DOScale(Vector3.one, 0.2f);
+            DI.di.dataSaver.currRoundNumber++;
+            foreach (Button b in allOptionButtons) {
+                b.transform.DOKill();
+                b.transform.DOScale(Vector3.one, 0.2f);
+                b.interactable = true;
             }
         }
 
-        private IEnumerator WaitAndEndRound() {
-            yield return new WaitForSeconds(GameConstants.GameplayConstants.PER_ROUND_TIME);
-            OnTimeEnd();
+        private void OnRoundTimeEnd() {
+            currState = State.ROUND_END_SHOWING_RESULT;
+            StopAllCoroutines();
+
+            StartCoroutine(BeginRoundEndSequence());
         }
 
-        private void OnTimeEnd() {
+        private IEnumerator BeginRoundEndSequence() {
+            foreach (Button b in allOptionButtons) {
+                b.interactable = false;
+            }
+            GameDI.di.botManager.RevealOnRoundEnd();
+
+            // 1 second for the player to absorb the output.
+            yield return new WaitForSeconds(1f);
             currState = State.ROUND_OVER;
-            StopAllCoroutines();
 
             if (!hasPlayerMoved) {
                 currRoundResult = RoundResult.PLAYER_LOST_NO_MOVE;
@@ -119,35 +127,70 @@ namespace Gameplay {
                 roundResultReason = result.Item2;
             }
 
+            SaveRoundData();
+
             if (currRoundResult == RoundResult.PLAYER_LOST_NO_MOVE || currRoundResult == RoundResult.PLAYER_LOST) {
-                // GameplayEvents.SHOW_POPUP?.Invoke("Game Over", 1f, () => {
-                //     EventsModel.LOAD_SCENE?.Invoke("Lobby", false, "Loading Lobby...");
+                // GameplayEvents.SHOW_POPUP?.Invoke("Game Over", 1f, null, () => {
+                //     OnExitButtonClicked();
                 // });
-                // return;
-                GameplayEvents.SHOW_POPUP?.Invoke($"Why??\n{roundResultReason}", 1f, () => {
-                    StartCoroutine(WaitAndStartRound());
+                GameplayEvents.SHOW_POPUP?.Invoke($"Why??\n{roundResultReason}", 2f, null, () => {
+                    StartNextRound();
                 });
-                return;
             }
 
-            if (currRoundResult == RoundResult.TIE) {
-                GameplayEvents.SHOW_POPUP?.Invoke($"TIE\n{roundResultReason}", 1f, () => {
-                    StartCoroutine(WaitAndStartRound());
+            if (currRoundResult == RoundResult.PLAYER_LOST) {
+                GameplayEvents.SHOW_POPUP?.Invoke($"You Lost\n{roundResultReason}", 2f, null, () => {
+                    StartNextRound();
                 });
-                return;
+            } else if (currRoundResult == RoundResult.TIE) {
+                GameplayEvents.SHOW_POPUP?.Invoke($"Tie\n{roundResultReason}", 2f, null, () => {
+                    StartNextRound();
+                });
+            } else {
+                // means player won
+                GameplayEvents.SHOW_POPUP?.Invoke($"You Won\n{roundResultReason}", 2f, null, () => {
+                    StartNextRound();
+                });
             }
+        }
 
-            // means player won
-            GameplayEvents.SHOW_POPUP?.Invoke($"You Won\n{roundResultReason}", 1f, () => {
-                StartCoroutine(WaitAndStartRound());
-            });
+        private void SaveRoundData() {
+            DI.di.dataSaver.totalRounds++;
+            switch (currRoundResult) {
+                case RoundResult.PLAYER_WON:
+                    DI.di.dataSaver.roundsWon++;
+                    DI.di.dataSaver.currStreak++;
+                    DI.di.dataSaver.maxStreak = Mathf.Max(DI.di.dataSaver.maxStreak, DI.di.dataSaver.currStreak);
+                    break;
+                case RoundResult.PLAYER_LOST:
+                    DI.di.dataSaver.roundsLost++;
+                    break;
+                case RoundResult.PLAYER_LOST_NO_MOVE:
+                    DI.di.dataSaver.roundsLost++;
+                    break;
+                case RoundResult.TIE:
+                    DI.di.dataSaver.roundsTied++;
+                    DI.di.dataSaver.currStreak++;
+                    DI.di.dataSaver.maxStreak = Mathf.Max(DI.di.dataSaver.maxStreak, DI.di.dataSaver.currStreak);
+                    break;
+                default:
+                    throw new Exception("Invalid Round Result");
+                    break;
+            }
+            UpdateInfoText();
+        }
+
+        private void UpdateInfoText() {
+            infoText.text = $"Round = {DI.di.dataSaver.currRoundNumber}\n" +
+                            $"Max Streak = {DI.di.dataSaver.maxStreak}";
         }
 
         private enum State {
             INIT,                           // just initial
             WAITING_FOR_ROUND_START,        // waiting for next round to start. Currently showing NEXT ROUND popup.
             ROUND_ACTIVE,                   // gameplay active
-            ROUND_OVER,                     // game has ended. Showing results. Wait for next round will start after this.
+            ROUND_END_SHOWING_RESULT,       // round has ended. In End sequence.
+            ROUND_OVER,                     // round end sequence is completed. Wait for next round will start after this.
         }
 
         private enum RoundResult {

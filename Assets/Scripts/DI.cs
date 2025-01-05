@@ -1,5 +1,6 @@
 
 using Sound;
+using Utils;
 
 
 /**
@@ -15,6 +16,8 @@ public class DI {
     public static DI di { get; private set; } = new DI();
 
     public SoundManager soundManager { get; private set; }
+    public DataSaver dataSaver { get; private set; }
 
     internal void SetSoundManager(SoundManager soundManager) => this.soundManager = soundManager;
+    internal void SetDataSaver(DataSaver dataSaver) => this.dataSaver = dataSaver;
 }

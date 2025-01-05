@@ -12,7 +12,13 @@ namespace Gameplay {
 
         private void OnPlayButtonClicked() {
             Debug.Log("LobbyManager :: OnPlayButtonClicked");
-            EventsModel.LOAD_SCENE?.Invoke("Gameplay", false, "Loading Gameplay...");
+            playButton.interactable = false;
+
+            DI.di.dataSaver.InGamePlay = true;
+            DI.di.dataSaver.currRoundNumber = 0;
+            DI.di.dataSaver.currStreak = 0;
+
+            EventsModel.LOAD_SCENE?.Invoke(GameConstants.Scenes.GAMEPLAY, false, "Loading Gameplay...");
         }
     }
 }

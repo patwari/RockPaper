@@ -23,7 +23,7 @@ namespace Gameplay {
         }
 
         private void OnSceneLoadCompleted(string sceneName) {
-            if (sceneName == GameConstants.Scenes.GAMEPLAY) {
+            if (sceneName != GameConstants.Scenes.GAMEPLAY) {
                 GameDI.Delete();
             }
         }

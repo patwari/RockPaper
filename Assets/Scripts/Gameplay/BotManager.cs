@@ -29,7 +29,7 @@ namespace Gameplay {
             if (GameDI.di.botManager != null) {
                 throw new System.Exception("BotManager already exists");
             }
-            name = GetNewName();
+            name = "bot-" + GetNewName();
             botNameText.text = name;
             GameDI.di.SetBotManager(this);
 
@@ -54,6 +54,8 @@ namespace Gameplay {
             StartCoroutine(WaitAndMakeBotMove());
         }
 
+        public void RevealOnRoundEnd() => botShape.RemoveMystery();
+
         private IEnumerator WaitAndMakeBotMove() {
             thinkingView.SetActive(true);
             shapeView.SetActive(true);
@@ -68,7 +70,6 @@ namespace Gameplay {
         }
 
         private IEnumerator DoThinkingAnim() {
-            // change shape every 50 ms.
             while (true) {
                 List<PlayerShape> options = new();
                 foreach (PlayerShape s in validShapes) {
@@ -78,16 +79,17 @@ namespace Gameplay {
                 }
                 PlayerShape next = Utils.ArrayUtils.GetRandomItem(options);
                 botShape.SetShape(next);
-                yield return new WaitForSeconds(0.05f);
+                yield return new WaitForSeconds(0.1f);
             }
         }
 
-        private string GetNewName() => Utils.ArrayUtils.GetRandomItem(new string[] { "Marcus", "Santa", "Barbie", "Datsun" });
+        private string GetNewName() => Utils.ArrayUtils.GetRandomItem(new string[] { "Marcus", "Santa", "Barbie", "Datsun", "Ninja", "Sudoku" });
 
         public void MakeBotMove() {
             bShape = Utils.ArrayUtils.GetRandomItem(validShapes);
             botShape.SetShape(bShape);
-            currState = BotState.MOVED;
+            botShape.EnableMystery();
+            currState = BotState.MOVE_MADE;
             shapeView.transform.DOMove(shapePosAfterThinkingRef.transform.position, 0.4f).SetEase(Ease.OutBounce);
             GameplayEvents.BOT_MOVE_MADE?.Invoke(bShape);
         }
@@ -95,8 +97,7 @@ namespace Gameplay {
         internal enum BotState {
             INIT,               // Initial state
             THINKING,           // bot is thinking
-            MOVED,              // bot has moved
-            OVER                // round is over
+            MOVE_MADE           // bot has moved
         }
     }
 }

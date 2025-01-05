@@ -9,14 +9,13 @@ namespace Gameplay {
     /// And gets deleted once the scene is unloaded. <br/>
     /// </summary>
     internal class GameDI {
-        public static GameDI di { get; private set; } = new GameDI();
+        public static GameDI di { get; private set; }
         public BotManager botManager { get; private set; } = null;
+        public TimerManager timerManager { get; private set; } = null;
 
         private GameDI() {
             shapeImageConfig = Resources.Load<ShapeImageConfig>("ScriptableObjects/ShapeImageConfig");
             Resources.UnloadAsset(shapeImageConfig);
-
-            Debug.Log($"patt :: GameDi created :: shapeImageConfig = {shapeImageConfig != null}");
         }
 
         public static void CreateNew() {
@@ -32,5 +31,6 @@ namespace Gameplay {
         public ShapeImageConfig shapeImageConfig { get; private set; } = null;
 
         public void SetBotManager(BotManager botManager) => this.botManager = botManager;
+        public void SetTimerManager(TimerManager timerManager) => this.timerManager = timerManager;
     }
 }

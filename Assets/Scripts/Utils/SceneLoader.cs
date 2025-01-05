@@ -57,7 +57,7 @@ namespace Utils.UIUtils {
         }
 
         private void TryLoadSceneFromQueue(string caller) {
-            Debug.Log($"SceneLoader :: TryLoadSceneFromQueue :: caller = {caller} :: QueueCount = {_sceneToLoadQ.Count} :: running = {_loadSceneCoroutine != null}");
+            // Debug.Log($"SceneLoader :: TryLoadSceneFromQueue :: caller = {caller} :: QueueCount = {_sceneToLoadQ.Count} :: running = {_loadSceneCoroutine != null}");
             if (_sceneToLoadQ.Count == 0) return;
 
             if (_loadSceneCoroutine == null) {
@@ -76,11 +76,10 @@ namespace Utils.UIUtils {
             message.SetText(string.IsNullOrEmpty(msg) ? "" : msg);
             FillLoader(0f);
 
-            Debug.Log($"SceneLoader :: BEGIN :: {prvScene} -> {sceneName} :: {(isAdditive ? "Additive" : "Single")}");
+            // Debug.Log($"SceneLoader :: BEGIN :: {prvScene} -> {sceneName} :: {(isAdditive ? "Additive" : "Single")}");
             EventsModel.PRE_SCENE_LOAD_BEGIN?.Invoke(sceneName);
 
             float startTime = Time.time;
-            float checkpoint = Time.time;
             AsyncOperation op = SceneManager.LoadSceneAsync(sceneName, isAdditive ? LoadSceneMode.Additive : LoadSceneMode.Single);
             op.allowSceneActivation = false;
 
@@ -89,39 +88,20 @@ namespace Utils.UIUtils {
                 FillLoader(op.progress);
                 yield return null;
             }
-            float t1 = Time.time - checkpoint;           // the actual time taken to load the scene.
-            checkpoint = Time.time;
 
-            float t2 = Time.time - checkpoint;           // the marginal time taken to wait for prerequisites to get ready.
-            checkpoint = Time.time;
-
-            // STAGE 2.2 if everything loaded too fast, we still want to show the loader for at least 0.3 sec.
-            while (Time.time - startTime < 0.3f) {
+            // STAGE 2 if everything loaded too fast, we still want to show the loader for at least 0.5 sec.
+            while (Time.time - startTime < 0.5f) {
                 float currPec = loadingBar.fillAmount;
-                FillLoader(Mathf.Lerp(currPec, 0.95f, (Time.time - startTime) / 0.3f));
+                FillLoader(Mathf.Lerp(currPec, 0.95f, (Time.time - startTime) / 0.5f));
                 yield return null;
             }
-            FillLoader(0.95f);
-            float t3 = Time.time - checkpoint;           // the marginal time taken to wait for min of 0.5 sec.
-            checkpoint = Time.time;
-
-            // Stage 3 = wait for all Awake() and OnEnable() functions to complete.
             if (!op.allowSceneActivation) op.allowSceneActivation = true;
-            while (!op.isDone) {
-                FillLoader(Math.Min(0.99f, loadingBar.fillAmount + 0.005f));
-                // FillLoader(op.progress);
-                yield return null;
-            }
             FillLoader(0.99f);
-            Debug.Log($"SceneLoader :: MID :: {prvScene} -> {sceneName} :: TotalTime = {(t1 + t2 + t3):F3} :: SceneTime = {t1:F3} :: DIWaitTime = {t2:F3} :: MinWaitTime = {t3:F3}");
-
             yield return null; // safety wait
 
             FillLoader(1f);
             yield return null;
             HideLoaderView();
-
-            Debug.Log($"SceneLoader :: END :: {prvScene} -> {sceneName} :: TotalTime = {(t1 + t2 + t3):F3} sec");
 
             EventsModel.SCENE_LOAD_COMPLETED?.Invoke(sceneName);
             _loadSceneCoroutine = null;

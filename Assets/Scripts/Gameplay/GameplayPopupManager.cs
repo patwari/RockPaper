@@ -21,21 +21,25 @@ namespace Utils {
             Events.GameplayEvents.SHOW_POPUP -= ShowPopup;
         }
 
-        private void ShowPopup(string message, float duration, UnityAction callback) {
+        private void ShowPopup(string message, float duration, UnityAction midCallback, UnityAction completeCallback) {
             view.DOKill(false);
             view.gameObject.SetActive(true);
             view.DOFade(1, inTime);
             messageText.text = message;
-            view.DOFade(0, outTime).SetDelay(duration - outTime).OnComplete(() => {
+
+            float midTime = duration / 2f;
+            StartCoroutine(WaitAndDo(midTime, midCallback));
+
+            view.DOFade(0, outTime).SetDelay(duration).OnComplete(() => {
                 view.gameObject.SetActive(false);
-                callback?.Invoke();
+                completeCallback?.Invoke();
             });
 
-            // StartCoroutine(WaitAndDo(duration, callback));
+            // StartCoroutine(WaitAndDo(duration, completeCallback));
         }
 
-        private IEnumerator WaitAndDo(float duration, UnityAction callback) {
-            yield return new WaitForSeconds(duration);
+        private IEnumerator WaitAndDo(float delay, UnityAction callback) {
+            yield return new WaitForSeconds(delay);
             callback?.Invoke();
         }
     }
