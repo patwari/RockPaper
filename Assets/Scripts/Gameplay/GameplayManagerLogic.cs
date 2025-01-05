@@ -1,9 +1,5 @@
 using UnityEngine;
-using UnityEngine.UI;
-using Events;
-using System.Collections;
 using System;
-using UnityEditor.VersionControl;
 
 namespace Gameplay {
     public partial class GameplayManager : MonoBehaviour {

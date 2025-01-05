@@ -1,5 +1,4 @@
 // it will store the reference to shape view
-using UnityEditor.iOS;
 using UnityEngine;
 
 namespace Gameplay {

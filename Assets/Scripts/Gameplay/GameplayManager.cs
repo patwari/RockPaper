@@ -66,7 +66,7 @@ namespace Gameplay {
 
         private void ExitToLobby() {
             DI.di.dataSaver.InGamePlay = false;
-            DI.di.dataSaver.currRoundNumber = 0;
+            DI.di.dataSaver.currRoundNumber = 1;
             DI.di.dataSaver.currStreak = 0;
             EventsModel.LOAD_SCENE?.Invoke(GameConstants.Scenes.LOBBY, false, "Loading Lobby...");
         }
@@ -77,15 +77,23 @@ namespace Gameplay {
             currShape = shape;
             DI.di.soundManager.PlayDefaultButtonClick();
 
+
             foreach (Button item in allOptionButtons) {
                 item.transform.DOKill();
-                if (item == button) item.transform.DOScale(new Vector3(1.2f, 1.2f, 1.2f), 0.2f);
-                else item.transform.DOScale(Vector3.one, 0.2f);
+                if (item == button) {
+                    item.transform.DOScale(new Vector3(1.2f, 1.2f, 1.2f), 0.2f);
+                    Transform outline = item.transform.Find("Select Outline");
+                    if (outline != null) outline.gameObject.SetActive(true);
+                } else {
+                    item.transform.DOScale(Vector3.one, 0.2f);
+                    Transform outline = item.transform.Find("Select Outline");
+                    if (outline != null) outline.gameObject.SetActive(false);
+                }
             }
         }
 
         private void StartNextRound() {
-            GameplayEvents.SHOW_POPUP?.Invoke("NEXT ROUND", 1f, () => {
+            GameplayEvents.SHOW_POPUP?.Invoke($"Round {DI.di.dataSaver.currRoundNumber}", 1f, () => {
                 MakeReadyForNextRound();
                 GameDI.di.botManager.ReadyForNewRound();
                 GameDI.di.timerManager.ReadyForNewRound();
@@ -104,6 +112,8 @@ namespace Gameplay {
             foreach (Button b in allOptionButtons) {
                 b.transform.DOKill();
                 b.transform.DOScale(Vector3.one, 0.2f);
+                Transform outline = b.transform.Find("Select Outline");
+                if (outline != null) outline.gameObject.SetActive(false);
                 b.interactable = true;
             }
         }
@@ -141,6 +151,7 @@ namespace Gameplay {
 
             if (currRoundResult == RoundResult.PLAYER_LOST_NO_MOVE) {
                 GameplayEvents.SHOW_POPUP?.Invoke($"Why??\n{roundResultReason}", 2f, null, () => {
+                    DI.di.soundManager.PlaySfx("OnLoseTimeout");
                     if (DI.di.dataSaver.AllowExitOnLose) {
                         ExitToLobby();
                     } else {
@@ -148,6 +159,7 @@ namespace Gameplay {
                     }
                 });
             } else if (currRoundResult == RoundResult.PLAYER_LOST) {
+                DI.di.soundManager.PlaySfx("OnLose");
                 GameplayEvents.SHOW_POPUP?.Invoke($"You Lost\n{roundResultReason}", 2f, null, () => {
                     if (DI.di.dataSaver.AllowExitOnLose) {
                         ExitToLobby();
@@ -160,7 +172,7 @@ namespace Gameplay {
                     StartNextRound();
                 });
             } else {
-                // means player won
+                DI.di.soundManager.PlaySfx("OnWin");
                 GameplayEvents.SHOW_POPUP?.Invoke($"You Won\n{roundResultReason}", 2f, null, () => {
                     StartNextRound();
                 });

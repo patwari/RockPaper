@@ -65,7 +65,7 @@ namespace Utils {
         /// Current round number in the current streak
         /// </summary>
         public int currRoundNumber {
-            get => PlayerPrefs.GetInt("currRoundNumber", 0);
+            get => PlayerPrefs.GetInt("currRoundNumber", 1);
             set => PlayerPrefs.SetInt("currRoundNumber", value);
         }
 

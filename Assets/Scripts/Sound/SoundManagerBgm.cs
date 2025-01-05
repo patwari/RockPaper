@@ -17,7 +17,7 @@ namespace Sound {
         // Following dictionary is made (on runtime) for easy access. Use them for all bgm related stuff.
         private Dictionary<string, float> defaultBgmVolumes = new Dictionary<string, float>();
 
-        public bool canPlayBgm { get; private set; } = true;
+        public bool canPlayBgm => DI.di.dataSaver.CanPlayBgm;
         private AudioSource currBgmAudio;
 
         /// <summary>

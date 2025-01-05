@@ -23,7 +23,7 @@ namespace Gameplay {
             playButton.interactable = false;
 
             DI.di.dataSaver.InGamePlay = true;
-            DI.di.dataSaver.currRoundNumber = 0;
+            DI.di.dataSaver.currRoundNumber = 1;
             DI.di.dataSaver.currStreak = 0;
 
             DI.di.soundManager.PlayDefaultButtonClick();
