@@ -305,6 +305,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 724287129157157234, guid: 3414b3b3bd4504ac3844f1b367af3c2d, type: 3}
+      propertyPath: m_Type
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 724287129157157234, guid: 3414b3b3bd4504ac3844f1b367af3c2d, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: c57fbe90f5c7d47c8916ad37cbe1e771, type: 3}
     - target: {fileID: 1127835595321512123, guid: 3414b3b3bd4504ac3844f1b367af3c2d, type: 3}
       propertyPath: m_fontSize
       value: 50
